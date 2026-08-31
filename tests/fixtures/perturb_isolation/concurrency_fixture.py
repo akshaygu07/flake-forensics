@@ -15,12 +15,18 @@ Calibrated so that under the default switch interval (5ms) with no
 contention this reliably passes, and under a very short switch interval
 plus background thread pressure it reliably fails (see
 tests/test_perturbation_isolation.py).
+
+ITERATIONS/THREAD_COUNT were first tuned only on Windows 11 / CPython 3.14
+(1500 x 4) and turned out to race far less reliably on Linux CI
+(ubuntu-latest, CPython 3.10-3.12: 3/5 reps instead of 5/5) — recalibrated
+higher across the board specifically so the race is reliable on both
+platforms, not just the one it was written on.
 """
 
 import threading
 
-ITERATIONS = 1500
-THREAD_COUNT = 4
+ITERATIONS = 20000
+THREAD_COUNT = 8
 
 
 def _yield_point() -> None:

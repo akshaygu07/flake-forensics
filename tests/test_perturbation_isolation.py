@@ -56,7 +56,7 @@ RNG_SEED = 1234
 CLOCK_TARGET = datetime.fromisoformat("2026-01-01T00:00:00")
 REPS = 5
 
-CONCURRENCY_KWARGS = dict(switch_interval=1e-6, contention="thread", contention_workers=4)
+CONCURRENCY_KWARGS = dict(switch_interval=1e-6, contention="thread", contention_workers=8)
 
 TEST_LOCALE_NAME = "de_DE.UTF-8"
 
