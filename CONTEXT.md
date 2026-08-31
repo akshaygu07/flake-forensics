@@ -16,7 +16,7 @@ exists.
 
 ## Phase status
 
-- **Phase 0 — Skeleton and honest baseline: in progress.**
+- **Phase 0 — Skeleton and honest baseline: done.**
   - [x] Repo scaffolded (`src/flake_forensics`, `tests/`, CI).
   - [x] Naive baseline implemented: reruns a test N times identically in
         isolated subprocesses, reports flake rate, always emits
@@ -27,8 +27,10 @@ exists.
         flaky for an unmodeled reason). Every later phase's accuracy and
         wall-clock cost is compared against this number and against this
         baseline's runtime.
-  - [ ] CI verified green on a pushed branch (needs a remote — not yet
-        pushed anywhere).
+  - [x] CI verified green on a pushed branch: pushed to
+        `github.com/akshaygu07/flake-forensics` (`main`); the full suite
+        passes on ubuntu-latest across Python 3.10/3.11/3.12
+        (run 33414015199).
 - **Phase 1 — Perturbation harness: 8 of 8 dimensions implemented.**
   - [x] RNG (`run_rng`, modes `vary`/`freeze`), Clock (`run_clock`, via
         freezegun), Order (`run_order_isolation` / `run_order_after` /
@@ -56,17 +58,20 @@ exists.
         fixture as the canary in both directions for every new dimension,
         matching the existing pattern). All non-skipped tests pass on this
         Windows 11 / CPython 3.14 machine.
-  - [ ] Not yet verified: the 3 resource-limits tests that are skipped here
-        (POSIX-only) still need to actually run green on the ubuntu-latest
-        CI matrix once pushed — written against the documented behavior but
-        never executed on Linux.
-  - **Open risk, not yet checked:** the Concurrency fixture's calibration
-    (1500 iterations x 4 threads, switch interval 1e-6) was tuned
-    empirically on this Windows 11 / CPython 3.14 machine. GIL/scheduler
-    timing is platform-sensitive; this has **not** been verified on the
-    ubuntu-latest CI matrix (no remote pushed yet). If it turns out
-    baseline races spuriously or perturbed doesn't race reliably on Linux,
-    recalibrate rather than widen the assertion to paper over it.
+  - [x] Verified on the ubuntu-latest CI matrix: the 3 resource-limits tests
+        that are skipped on Windows run and pass on all three Python
+        versions there (they were previously written against documented
+        POSIX behavior only, never executed).
+  - **Resolved (was an open risk):** the Concurrency fixture's original
+    calibration (1500 iterations x 4 threads, switch interval 1e-6),
+    tuned only on Windows 11 / CPython 3.14, raced just 3/5 reps on
+    ubuntu-latest instead of 5/5 — confirmed by the first real CI run
+    (33413336111). Per the standing policy here, recalibrated rather than
+    loosened the assertion: 20000 iterations x 8 threads (test's
+    `contention_workers` bumped to 8 to match). Reran CI twice after the
+    fix to rule out the fix itself being flaky — both green, all three
+    Python versions, race fixture failing 5/5 as intended and 0/5 at
+    baseline.
   - **Resolved:** the Windows-portability question flagged here previously
     (`resource.setrlimit` and `time.tzset` are POSIX-only) is now decided,
     not just noted. Timezone sidesteps it entirely — freezegun's `tz_offset`
@@ -101,8 +106,13 @@ exists.
   itself doesn't leak state between runs and contaminate the flake-rate
   measurement it's supposed to be establishing honestly.
 - Packaging: hatchling + `src/` layout, `flake-forensics` console script.
-- Not yet pushed to a git remote or committed — local repo only, awaiting
-  review.
+- Pushed to `github.com/akshaygu07/flake-forensics` (public). Local default
+  branch was `master`; renamed to `main` to match `ci.yml`'s trigger
+  (`on.push.branches: [main]`) — without this, GitHub Actions never even
+  registered the workflow, let alone ran it. Repo's default branch on
+  GitHub set to `main` and `master` deleted there to match.
+- Commit messages deliberately carry no AI-attribution trailer (no
+  co-author line, no session link), per explicit instruction.
 - Added `freezegun` as a real dependency (not dev-only) for the Clock
   dimension: it patches `datetime`/`time` in-process rather than touching
   the real OS clock, which avoids requiring admin/root privileges and
